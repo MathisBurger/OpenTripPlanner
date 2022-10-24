@@ -8,6 +8,8 @@ import org.opentripplanner.transit.raptor.api.request.RaptorTuningParameters;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
+import org.opentripplanner.transit.raptor.heuristic.DefaultHeuristicRoutingStrategy;
+import org.opentripplanner.transit.raptor.heuristic.HeuristicRaptorWorker;
 import org.opentripplanner.transit.raptor.rangeraptor.RangeRaptorWorker;
 import org.opentripplanner.transit.raptor.rangeraptor.context.SearchContext;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.HeuristicSearch;
@@ -69,6 +71,31 @@ public class RaptorConfig<T extends RaptorTripSchedule> {
     RaptorRequest<T> request
   ) {
     SearchContext<T> context = context(transitData, request);
+
+    if (context.searchDirection().isInReverse()) {
+      final DefaultHeuristicRoutingStrategy<T> strategy = new DefaultHeuristicRoutingStrategy<>(
+        context.nStops(),
+        context.roundProvider(),
+        context.lifeCycle(),
+        costCalculator,
+        context.egressStops()
+      );
+
+      HeuristicRaptorWorker<T> worker = new HeuristicRaptorWorker<T>(
+        strategy,
+        transitData,
+        context.slackProvider(),
+        context.accessPaths(),
+        context.roundProvider(),
+        context.calculator(),
+        context.createLifeCyclePublisher(),
+        context.performanceTimers(),
+        context.enableConstrainedTransfers()
+      );
+
+      return new HeuristicSearch<>(worker, strategy.heuristics());
+    }
+
     return new StdRangeRaptorConfig<>(context)
       .createHeuristicSearch((s, w) -> createWorker(context, s, w), costCalculator);
   }

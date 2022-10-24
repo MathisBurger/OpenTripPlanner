@@ -28,4 +28,8 @@ public interface RaptorTimeTable<T extends RaptorTripSchedule> {
    * Factory method to create the trip search
    */
   RaptorTripScheduleSearch<T> tripSearch(SearchDirection direction);
+
+  default T getHeuristicTrip() {
+    return getTripSchedule(0);
+  }
 }
