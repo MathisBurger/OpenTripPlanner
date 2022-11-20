@@ -59,8 +59,8 @@ public class HeuristicsAdapter implements Heuristics {
   }
 
   @Override
-  public int[] bestNumOfTransfersToIntArray(int unreached) {
-    return toIntArray(size(), unreached, this::bestNumOfTransfers);
+  public byte[] bestNumOfTransfersToByteArray(byte unreached) {
+    return toByteArray(size(), unreached, this::bestNumOfTransfers);
   }
 
   @Override
@@ -138,8 +138,8 @@ public class HeuristicsAdapter implements Heuristics {
     return calculator.duration(originDepartureTime, times.time(stop));
   }
 
-  private int bestNumOfTransfers(int stop) {
-    return transfers.calculateMinNumberOfTransfers(stop);
+  private byte bestNumOfTransfers(int stop) {
+    return (byte) transfers.calculateMinNumberOfTransfers(stop);
   }
 
   private int bestGeneralizedCost(int stop) {
@@ -203,5 +203,24 @@ public class HeuristicsAdapter implements Heuristics {
       }
     }
     return a;
+  }
+
+  /**
+   * Convert one of heuristics to an int array.
+   */
+  private byte[] toByteArray(int size, byte unreached, IntToByteOperator supplier) {
+    byte[] a = new byte[size];
+    Arrays.fill(a, unreached);
+    for (int i = 0; i < a.length; i++) {
+      if (reached(i)) {
+        a[i] = supplier.apply(i);
+      }
+    }
+    return a;
+  }
+
+  @FunctionalInterface
+  public interface IntToByteOperator {
+    byte apply(int operand);
   }
 }

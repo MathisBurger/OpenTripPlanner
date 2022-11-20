@@ -1,5 +1,6 @@
 package org.opentripplanner.transit.raptor.heuristic;
 
+import java.util.Arrays;
 import java.util.function.IntUnaryOperator;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.HeuristicAtStop;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.Heuristics;
@@ -7,13 +8,13 @@ import org.opentripplanner.util.lang.IntUtils;
 
 public class ReverseHeuristicsAdapter implements Heuristics {
 
-  private final int[] bestNumOfTransfers;
+  private final byte[] bestNumOfTransfers;
   private final int[] times;
   private final int[] costs;
   private final int[] egressStops;
 
   public ReverseHeuristicsAdapter(
-    int[] bestNumOfTransfers,
+    byte[] bestNumOfTransfers,
     int[] times,
     int[] costs,
     int[] egressStops
@@ -30,8 +31,8 @@ public class ReverseHeuristicsAdapter implements Heuristics {
   }
 
   @Override
-  public int[] bestNumOfTransfersToIntArray(int unreached) {
-    return toIntArray(size(), unreached, this::bestNumOfTransfers);
+  public byte[] bestNumOfTransfersToByteArray(byte unreached) {
+    return toByteArray(size(), unreached, this::bestNumOfTransfers);
   }
 
   @Override
@@ -96,7 +97,7 @@ public class ReverseHeuristicsAdapter implements Heuristics {
     return times[stop];
   }
 
-  private int bestNumOfTransfers(int stop) {
+  private byte bestNumOfTransfers(int stop) {
     return bestNumOfTransfers[stop];
   }
 
@@ -115,5 +116,24 @@ public class ReverseHeuristicsAdapter implements Heuristics {
       }
     }
     return a;
+  }
+
+  /**
+   * Convert one of heuristics to an int array.
+   */
+  private byte[] toByteArray(int size, byte unreached, IntToByteOperator supplier) {
+    byte[] a = new byte[size];
+    Arrays.fill(a, unreached);
+    for (int i = 0; i < a.length; i++) {
+      if (reached(i)) {
+        a[i] = supplier.apply(i);
+      }
+    }
+    return a;
+  }
+
+  @FunctionalInterface
+  public interface IntToByteOperator {
+    byte apply(int operand);
   }
 }

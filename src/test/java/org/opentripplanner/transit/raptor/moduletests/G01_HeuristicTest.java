@@ -30,7 +30,8 @@ public class G01_HeuristicTest implements RaptorTestConstants {
 
   // Any big negative number will do, but -1 is a legal value
   private static final int UNREACHED = -9999;
-  private static final int[] BEST_TRANSFERS = { UNREACHED, 1, 0, 0, -1 };
+  private static final byte UNREACHED_ROUND = -99;
+  private static final byte[] BEST_TRANSFERS = { UNREACHED_ROUND, 1, 0, 0, -1 };
   private static final int[] BEST_TIMES = {
     UNREACHED,
     //  Egress + R2     + Transfer + Slack + R1
@@ -119,17 +120,35 @@ public class G01_HeuristicTest implements RaptorTestConstants {
 
     assertArrayLessOrEqual(
       BEST_TRANSFERS,
-      destinationHeuristics.bestNumOfTransfersToIntArray(UNREACHED),
+      destinationHeuristics.bestNumOfTransfersToByteArray(UNREACHED_ROUND),
       "best number of transfers"
     );
+
     assertArrayLessOrEqual(
       BEST_TIMES,
-      destinationHeuristics.bestTravelDurationToIntArray(UNREACHED),
+      destinationHeuristics.bestTravelDurationToIntArray(UNREACHED_ROUND),
       "best times"
     );
   }
 
   private void assertArrayLessOrEqual(int[] expected, int[] actual, String arrayName) {
+    assertNotNull(actual);
+    assertEquals(expected.length, actual.length);
+    for (int i = 0; i < expected.length; i++) {
+      assertTrue(
+        expected[i] >= actual[i],
+        String.format(
+          "Value %d is greater than %d for index %d in %s",
+          actual[i],
+          expected[i],
+          i,
+          arrayName
+        )
+      );
+    }
+  }
+
+  private void assertArrayLessOrEqual(byte[] expected, byte[] actual, String arrayName) {
     assertNotNull(actual);
     assertEquals(expected.length, actual.length);
     for (int i = 0; i < expected.length; i++) {

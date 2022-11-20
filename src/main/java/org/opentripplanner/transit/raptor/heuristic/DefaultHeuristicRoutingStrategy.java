@@ -2,6 +2,7 @@ package org.opentripplanner.transit.raptor.heuristic;
 
 import static org.opentripplanner.util.lang.IntUtils.intArray;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Iterator;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
@@ -21,7 +22,7 @@ public class DefaultHeuristicRoutingStrategy<T extends RaptorTripSchedule>
 
   public static final int UNREACHED = 999_999_999;
   private final int[] egressStops;
-  private final int[] bestNumOfTransfers;
+  private final byte[] bestNumOfTransfers;
 
   /** The best times to reach a stop, across rounds and iterations. */
   private final int[] times;
@@ -56,7 +57,8 @@ public class DefaultHeuristicRoutingStrategy<T extends RaptorTripSchedule>
     CostCalculator<T> costCalculator,
     int[] egressStops
   ) {
-    this.bestNumOfTransfers = intArray(nStops, UNREACHED);
+    this.bestNumOfTransfers = new byte[nStops];
+    Arrays.fill(bestNumOfTransfers, Byte.MAX_VALUE);
     this.times = intArray(nStops, UNREACHED);
     this.transitArrivalTimes = intArray(nStops, UNREACHED);
     this.costs = intArray(nStops, UNREACHED);
@@ -272,7 +274,7 @@ public class DefaultHeuristicRoutingStrategy<T extends RaptorTripSchedule>
   }
 
   void updateBestRound(int stop) {
-    final int numOfTransfers = roundProvider.round() - 1;
+    final byte numOfTransfers = (byte) (roundProvider.round() - 1);
     if (numOfTransfers < bestNumOfTransfers[stop]) {
       bestNumOfTransfers[stop] = numOfTransfers;
     }

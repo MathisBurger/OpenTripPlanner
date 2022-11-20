@@ -18,6 +18,7 @@ public class DebugHeuristics {
 
   // Any big negative number will do, but -1 is a legal value
   private static final int UNREACHED = -9999;
+  private static final byte UNREACHED_ROUND = -99;
 
   private final String aName;
   private final String bName;
@@ -49,18 +50,18 @@ public class DebugHeuristics {
   }
 
   private void debug(Heuristics fwdHeur, Heuristics revHeur, SearchDirection direction) {
-    log(
-      CompareIntArrays.compare(
-        "NUMBER OF TRANSFERS",
-        aName,
-        fwdHeur.bestNumOfTransfersToIntArray(UNREACHED),
-        bName,
-        revHeur.bestNumOfTransfersToIntArray(UNREACHED),
-        UNREACHED,
-        stops,
-        comparingInt(i -> i)
-      )
-    );
+    //    log(
+    //      CompareIntArrays.compare(
+    //        "NUMBER OF TRANSFERS",
+    //        aName,
+    //        fwdHeur.bestNumOfTransfersToByteArray(UNREACHED_ROUND),
+    //        bName,
+    //        revHeur.bestNumOfTransfersToByteArray(UNREACHED_ROUND),
+    //        UNREACHED,
+    //        stops,
+    //        comparingInt(i -> i)
+    //      )
+    //    );
     log(
       CompareIntArrays.compareTime(
         "TRAVEL DURATION",

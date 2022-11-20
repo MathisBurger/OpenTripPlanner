@@ -24,7 +24,7 @@ public interface Heuristics {
    *
    * @param unreached set all unreached values to this value
    */
-  int[] bestNumOfTransfersToIntArray(int unreached);
+  byte[] bestNumOfTransfersToByteArray(byte unreached);
 
   /**
    * To plot or debug the generalized cost.
