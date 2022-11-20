@@ -7,6 +7,7 @@ import org.opentripplanner.transit.raptor.rangeraptor.internalapi.Heuristics;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.RoundProvider;
 import org.opentripplanner.transit.raptor.rangeraptor.multicriteria.arrivals.AbstractStopArrival;
 import org.opentripplanner.transit.raptor.rangeraptor.path.DestinationArrivalPaths;
+import org.opentripplanner.transit.raptor.rangeraptor.transit.RoundTracker;
 
 /**
  * A wrapper around {@link Heuristics} to cache elements to avoid recalculation of heuristic
@@ -17,7 +18,7 @@ import org.opentripplanner.transit.raptor.rangeraptor.path.DestinationArrivalPat
 public final class HeuristicsProvider<T extends RaptorTripSchedule> {
 
   private final Heuristics heuristics;
-  private final RoundProvider roundProvider;
+  private final RoundTracker roundProvider;
   private final DestinationArrivalPaths<T> paths;
   private final HeuristicAtStop[] stops;
   private final DebugHandlerFactory<T> debugHandlerFactory;
@@ -33,7 +34,7 @@ public final class HeuristicsProvider<T extends RaptorTripSchedule> {
     DebugHandlerFactory<T> debugHandlerFactory
   ) {
     this.heuristics = heuristics;
-    this.roundProvider = roundProvider;
+    this.roundProvider = (RoundTracker) roundProvider;
     this.paths = paths;
     this.stops = heuristics == null ? null : new HeuristicAtStop[heuristics.size()];
     this.debugHandlerFactory = debugHandlerFactory;
@@ -88,11 +89,14 @@ public final class HeuristicsProvider<T extends RaptorTripSchedule> {
       return false;
     }
     int minArrivalTime = arrivalTime + h.minTravelDuration();
-    int minNumberOfTransfers = roundProvider.round() - 1 + h.minNumTransfers();
+    int minNumberOfRounds = roundProvider.round() + h.minNumTransfers();
+    if (minNumberOfRounds > roundProvider.roundMaxLimit()) {
+      return false;
+    }
     int minTravelDuration = travelDuration + h.minTravelDuration();
     int minCost = cost + h.minCost();
     int departureTime = minArrivalTime - minTravelDuration;
-    return paths.qualify(departureTime, minArrivalTime, minNumberOfTransfers, minCost);
+    return paths.qualify(departureTime, minArrivalTime, minNumberOfRounds - 1, minCost);
   }
 
   private String rejectErrorMessage(int stop) {

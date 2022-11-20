@@ -28,7 +28,7 @@ public class RoundTracker implements RoundProvider {
    * This is default set to the maximum number of rounds limit, but as soon as the destination is
    * reach the {@link #numberOfAdditionalTransfers} is used to update the limit.
    * <p/>
-   * The limit is inclusive, indicating the the last round to process.
+   * The limit is inclusive, indicating the last round to process.
    */
   private int roundMaxLimit;
 
@@ -55,6 +55,10 @@ public class RoundTracker implements RoundProvider {
    */
   public int round() {
     return round;
+  }
+
+  public int roundMaxLimit() {
+    return roundMaxLimit;
   }
 
   /**
