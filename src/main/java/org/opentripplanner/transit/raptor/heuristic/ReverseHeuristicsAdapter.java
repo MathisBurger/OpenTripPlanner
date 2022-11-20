@@ -90,7 +90,7 @@ public class ReverseHeuristicsAdapter implements Heuristics {
   }
 
   private boolean reached(int stop) {
-    return bestNumOfTransfers[stop] < DefaultHeuristicRoutingStrategy.UNREACHED;
+    return bestNumOfTransfers[stop] < DefaultHeuristicRoutingStrategy.UNREACHED_ROUNDS;
   }
 
   private int bestTravelDuration(int stop) {

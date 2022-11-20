@@ -21,6 +21,7 @@ public class DefaultHeuristicRoutingStrategy<T extends RaptorTripSchedule>
   implements HeuristicRoutingStrategy<T> {
 
   public static final int UNREACHED = 999_999_999;
+  public static final byte UNREACHED_ROUNDS = 99;
   private final int[] egressStops;
   private final byte[] bestNumOfTransfers;
 
@@ -61,7 +62,7 @@ public class DefaultHeuristicRoutingStrategy<T extends RaptorTripSchedule>
     Heuristics previousHeuristic
   ) {
     this.bestNumOfTransfers = new byte[nStops];
-    Arrays.fill(bestNumOfTransfers, Byte.MAX_VALUE);
+    Arrays.fill(bestNumOfTransfers, UNREACHED_ROUNDS);
     this.times = intArray(nStops, UNREACHED);
     this.transitArrivalTimes = intArray(nStops, UNREACHED);
     this.costs = intArray(nStops, UNREACHED);
