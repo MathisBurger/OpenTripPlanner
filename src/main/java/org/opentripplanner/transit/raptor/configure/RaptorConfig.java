@@ -10,6 +10,7 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.opentripplanner.transit.raptor.heuristic.DefaultHeuristicRoutingStrategy;
 import org.opentripplanner.transit.raptor.heuristic.HeuristicRaptorWorker;
+import org.opentripplanner.transit.raptor.heuristic.RoundOnlyHeuristicRaptorWorker;
 import org.opentripplanner.transit.raptor.rangeraptor.RangeRaptorWorker;
 import org.opentripplanner.transit.raptor.rangeraptor.context.SearchContext;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.HeuristicSearch;
@@ -68,7 +69,8 @@ public class RaptorConfig<T extends RaptorTripSchedule> {
   public HeuristicSearch<T> createHeuristicSearch(
     RaptorTransitDataProvider<T> transitData,
     CostCalculator<T> costCalculator,
-    RaptorRequest<T> request
+    RaptorRequest<T> request,
+    Heuristics previousHeuristic
   ) {
     SearchContext<T> context = context(transitData, request);
 
@@ -78,7 +80,8 @@ public class RaptorConfig<T extends RaptorTripSchedule> {
         context.roundProvider(),
         context.lifeCycle(),
         costCalculator,
-        context.egressStops()
+        context.egressStops(),
+        previousHeuristic
       );
 
       HeuristicRaptorWorker<T> worker = new HeuristicRaptorWorker<T>(
@@ -94,10 +97,20 @@ public class RaptorConfig<T extends RaptorTripSchedule> {
       );
 
       return new HeuristicSearch<>(worker, strategy.heuristics());
-    }
+    } else {
+      RoundOnlyHeuristicRaptorWorker<T> worker = new RoundOnlyHeuristicRaptorWorker<>(
+        transitData,
+        context.accessPaths(),
+        context.egressStops(),
+        context.calculator(),
+        context.roundProvider(),
+        context.createLifeCyclePublisher(),
+        context.performanceTimers(),
+        context.searchParams().numberOfAdditionalTransfers()
+      );
 
-    return new StdRangeRaptorConfig<>(context)
-      .createHeuristicSearch((s, w) -> createWorker(context, s, w), costCalculator);
+      return new HeuristicSearch<>(worker, worker.heuristics());
+    }
   }
 
   public boolean isMultiThreaded() {
