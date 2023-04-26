@@ -1,294 +1,166 @@
 package org.opentripplanner.routing.alertpatch;
 
-import java.util.Objects;
-import org.opentripplanner.model.FeedScopedId;
-import org.opentripplanner.model.calendar.ServiceDate;
+import java.time.LocalDate;
+import java.util.Set;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.timetable.Direction;
 
 public interface EntitySelector {
-  class Agency implements EntitySelector {
-    public final FeedScopedId agencyId;
+  EntityKey key();
 
-    public Agency(FeedScopedId agencyId) {this.agencyId = agencyId;}
+  default boolean matches(EntitySelector other) {
+    return this.equals(other);
+  }
 
+  record Agency(FeedScopedId agencyId) implements EntitySelector {
     @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      Agency agency = (Agency) o;
-      return agencyId.equals(agency.agencyId);
-    }
-
-    @Override
-    public int hashCode() {
-      return agencyId.hashCode();
+    public EntityKey.Agency key() {
+      return new EntityKey.Agency(agencyId);
     }
   }
 
-  class Stop implements EntitySelector {
-    public final FeedScopedId stopId;
-
-    public Stop(FeedScopedId stopId) {this.stopId = stopId;}
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      Stop stop = (Stop) o;
-      return stopId.equals(stop.stopId);
+  record Stop(FeedScopedId stopId, Set<StopCondition> stopConditions) implements EntitySelector {
+    public Stop(FeedScopedId stopId) {
+      this(stopId, Set.of());
     }
 
     @Override
-    public int hashCode() {
-      return stopId.hashCode();
-    }
-  }
-
-  class Route implements EntitySelector {
-    public final FeedScopedId routeId;
-
-    public Route(FeedScopedId routeId) {this.routeId = routeId;}
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      Route route = (Route) o;
-      return routeId.equals(route.routeId);
+    public EntityKey.Stop key() {
+      return new EntityKey.Stop(stopId);
     }
 
     @Override
-    public int hashCode() {
-      return routeId.hashCode();
-    }
-  }
-
-  class Trip implements EntitySelector {
-    public final FeedScopedId tripId;
-    public final ServiceDate serviceDate;
-
-    private transient int hash = -1;
-
-    public Trip(FeedScopedId tripId) {this(tripId, null);}
-    public Trip(FeedScopedId tripId, ServiceDate serviceDate) {
-      this.tripId = tripId;
-      this.serviceDate = serviceDate;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      Trip trip = (Trip) o;
-
-      if ((serviceDate != null && trip.serviceDate != null) &&
-          !serviceDate.equals(trip.serviceDate)) {
-        // Only compare serviceDate when NOT null
+    public boolean matches(EntitySelector other) {
+      if (!(other instanceof EntitySelector.Stop s)) {
         return false;
       }
-
-      return tripId.equals(trip.tripId);
-    }
-
-    @Override
-    public int hashCode() {
-      if ( hash == -1) {
-        int serviceDateResult = serviceDate == null ? 0 : serviceDate.hashCode();
-        hash = 31 * serviceDateResult + tripId.hashCode();
-      }
-      return hash;
+      return (
+        stopId.equals(s.stopId) &&
+        StopConditionsHelper.matchesStopCondition(stopConditions, s.stopConditions)
+      );
     }
   }
 
-  class StopAndRoute implements EntitySelector {
-    public final StopAndRouteOrTripKey stopAndRoute;
+  record Route(FeedScopedId routeId) implements EntitySelector {
+    @Override
+    public EntityKey.Route key() {
+      return new EntityKey.Route(routeId);
+    }
+  }
 
+  record Trip(FeedScopedId tripId, LocalDate serviceDate) implements EntitySelector {
+    public Trip(FeedScopedId tripId) {
+      this(tripId, null);
+    }
+
+    @Override
+    public EntityKey.Trip key() {
+      return new EntityKey.Trip(tripId);
+    }
+
+    @Override
+    public boolean matches(EntitySelector other) {
+      if (!(other instanceof EntitySelector.Trip t)) {
+        return false;
+      }
+      return (
+        tripId.equals(t.tripId) &&
+        (serviceDate == null || t.serviceDate == null || serviceDate.equals(t.serviceDate))
+      );
+    }
+  }
+
+  record StopAndRoute(FeedScopedId stopId, FeedScopedId routeId, Set<StopCondition> stopConditions)
+    implements EntitySelector {
     public StopAndRoute(FeedScopedId stopId, FeedScopedId routeId) {
-      this.stopAndRoute = new StopAndRouteOrTripKey(stopId, routeId);
+      this(stopId, routeId, Set.of());
+    }
+
+    public StopAndRoute(
+      FeedScopedId stopId,
+      Set<StopCondition> stopConditions,
+      FeedScopedId routeId
+    ) {
+      this(stopId, routeId, stopConditions);
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      StopAndRoute that = (StopAndRoute) o;
-      return stopAndRoute.equals(that.stopAndRoute);
+    public EntityKey.StopAndRoute key() {
+      return new EntityKey.StopAndRoute(stopId, routeId);
     }
 
     @Override
-    public int hashCode() {
-      return stopAndRoute.hashCode();
+    public boolean matches(EntitySelector other) {
+      if (!(other instanceof EntitySelector.StopAndRoute s)) {
+        return false;
+      }
+      return (
+        stopId.equals(s.stopId) &&
+        routeId.equals(s.routeId) &&
+        StopConditionsHelper.matchesStopCondition(stopConditions, s.stopConditions)
+      );
     }
   }
 
-  class StopAndTrip implements EntitySelector {
-    public final StopAndRouteOrTripKey stopAndTrip;
-
+  record StopAndTrip(
+    FeedScopedId stopId,
+    FeedScopedId tripId,
+    LocalDate serviceDate,
+    Set<StopCondition> stopConditions
+  )
+    implements EntitySelector {
     public StopAndTrip(FeedScopedId stopId, FeedScopedId tripId) {
-      this(stopId, tripId, null);
+      this(stopId, tripId, null, Set.of());
     }
 
-    public StopAndTrip(FeedScopedId stopId, FeedScopedId tripId, ServiceDate serviceDate) {
-      this.stopAndTrip = new StopAndRouteOrTripKey(stopId, tripId, serviceDate);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) { return true; }
-      if (o == null || getClass() != o.getClass()) { return false; }
-      StopAndTrip that = (StopAndTrip) o;
-      return stopAndTrip.equals(that.stopAndTrip);
+    public StopAndTrip(FeedScopedId stopId, FeedScopedId tripId, LocalDate serviceDate) {
+      this(stopId, tripId, serviceDate, Set.of());
     }
 
     @Override
-    public int hashCode() {
-      return stopAndTrip.hashCode();
-    }
-  }
-
-  class Unknown implements EntitySelector {
-
-    public final String description;
-
-    public Unknown(String description) {
-      this.description = description;
+    public EntityKey.StopAndTrip key() {
+      return new EntityKey.StopAndTrip(stopId, tripId);
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
+    public boolean matches(EntitySelector other) {
+      if (!(other instanceof EntitySelector.StopAndTrip s)) {
         return false;
       }
-      Unknown that = (Unknown) o;
-      return description.equals(that.description);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(description);
-    }
-  }
-
-  class RouteType implements EntitySelector {
-
-    public final int routeType;
-
-    public final String feedId;
-
-    public RouteType(int routeType, String feedId) {
-      this.routeType = routeType;
-      this.feedId = feedId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {return true;}
-      if (o == null || getClass() != o.getClass()) {return false;}
-      RouteType that = (RouteType) o;
-      return routeType == that.routeType && feedId.equals(that.feedId);
-    }
-
-    @Override
-    public int hashCode() {
-      return 37 * routeType * Objects.hash(feedId);
+      return (
+        stopId.equals(s.stopId) &&
+        tripId.equals(s.tripId) &&
+        StopConditionsHelper.matchesStopCondition(stopConditions, s.stopConditions) &&
+        (serviceDate == null || s.serviceDate == null || serviceDate.equals(s.serviceDate))
+      );
     }
   }
 
-  class RouteTypeAndAgency implements EntitySelector {
-
-    public final int routeType;
-
-    public final FeedScopedId agencyId;
-
-    public RouteTypeAndAgency(int routeType, FeedScopedId agencyId) {
-      this.routeType = routeType;
-      this.agencyId = agencyId;
-    }
-
+  record Unknown(String description) implements EntitySelector {
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {return true;}
-      if (o == null || getClass() != o.getClass()) {return false;}
-      RouteTypeAndAgency that = (RouteTypeAndAgency) o;
-      return routeType == that.routeType && agencyId.equals(that.agencyId);
-    }
-
-    @Override
-    public int hashCode() {
-      int agencyHash = Objects.hash(agencyId);
-      return 37 * routeType * agencyHash;
+    public EntityKey.Unknown key() {
+      return new EntityKey.Unknown();
     }
   }
 
-  class DirectionAndRoute implements EntitySelector {
-
-    public final int directionId;
-
-    public final FeedScopedId routeId;
-
-    public DirectionAndRoute(int directionId, FeedScopedId routeId) {
-      this.directionId = directionId;
-      this.routeId = routeId;
-    }
-
+  record RouteType(String feedId, int routeType) implements EntitySelector {
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {return true;}
-      if (o == null || getClass() != o.getClass()) {return false;}
-      DirectionAndRoute that = (DirectionAndRoute) o;
-      return directionId == that.directionId && routeId.equals(that.routeId);
-    }
-
-    @Override
-    public int hashCode() {
-      int routeHash = Objects.hash(routeId);
-      return 41 * directionId * routeHash;
+    public EntityKey.RouteType key() {
+      return new EntityKey.RouteType(feedId, routeType);
     }
   }
 
-  class StopAndRouteOrTripKey {
-    public final FeedScopedId stop;
-    public final FeedScopedId routeOrTrip;
-    public final ServiceDate serviceDate;
-    private final transient int hash;
-
-    public StopAndRouteOrTripKey(FeedScopedId stop, FeedScopedId routeOrTrip) {
-      this(stop, routeOrTrip, null);
-    }
-    public StopAndRouteOrTripKey(FeedScopedId stop, FeedScopedId routeOrTrip, ServiceDate serviceDate) {
-      this.stop = stop;
-      this.routeOrTrip = routeOrTrip;
-      this.serviceDate = serviceDate;
-      this.hash = Objects.hash(stop, serviceDate, routeOrTrip);
-    }
-
+  record RouteTypeAndAgency(FeedScopedId agencyId, int routeType) implements EntitySelector {
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      StopAndRouteOrTripKey that = (StopAndRouteOrTripKey) o;
-
-      if (!stop.equals(that.stop)) {
-        return false;
-      }
-
-      if (!routeOrTrip.equals(that.routeOrTrip)) {
-        return false;
-      }
-
-      return serviceDate != null ? serviceDate.equals(that.serviceDate) : that.serviceDate == null;
+    public EntityKey.RouteTypeAndAgency key() {
+      return new EntityKey.RouteTypeAndAgency(agencyId, routeType);
     }
+  }
 
+  record DirectionAndRoute(FeedScopedId routeId, Direction direction) implements EntitySelector {
     @Override
-    public int hashCode() {
-      return hash;
+    public EntityKey.DirectionAndRoute key() {
+      return new EntityKey.DirectionAndRoute(routeId, direction);
     }
   }
 }

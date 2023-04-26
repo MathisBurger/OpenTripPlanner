@@ -4,14 +4,15 @@ import org.opentripplanner.updater.PollingGraphUpdaterParameters;
 import org.opentripplanner.updater.vehicle_rental.datasources.params.VehicleRentalDataSourceParameters;
 
 public class VehicleRentalUpdaterParameters implements PollingGraphUpdaterParameters {
+
   private final String configRef;
   private final int frequencySec;
   private final VehicleRentalDataSourceParameters source;
 
   public VehicleRentalUpdaterParameters(
-      String configRef,
-      int frequencySec,
-      VehicleRentalDataSourceParameters source
+    String configRef,
+    int frequencySec,
+    VehicleRentalDataSourceParameters source
   ) {
     this.configRef = configRef;
     this.frequencySec = frequencySec;
@@ -19,7 +20,7 @@ public class VehicleRentalUpdaterParameters implements PollingGraphUpdaterParame
   }
 
   @Override
-  public int getFrequencySec() {
+  public int frequencySec() {
     return frequencySec;
   }
 
@@ -27,7 +28,7 @@ public class VehicleRentalUpdaterParameters implements PollingGraphUpdaterParame
    * The config name/type for the updater. Used to reference the configuration element.
    */
   @Override
-  public String getConfigRef() {
+  public String configRef() {
     return configRef;
   }
 

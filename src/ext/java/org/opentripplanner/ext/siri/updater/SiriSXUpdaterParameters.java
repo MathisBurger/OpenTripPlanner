@@ -3,6 +3,7 @@ package org.opentripplanner.ext.siri.updater;
 import org.opentripplanner.updater.PollingGraphUpdaterParameters;
 
 public class SiriSXUpdaterParameters implements PollingGraphUpdaterParameters {
+
   private final String configRef;
   private final String feedId;
   private final String url;
@@ -13,14 +14,14 @@ public class SiriSXUpdaterParameters implements PollingGraphUpdaterParameters {
   private final boolean blockReadinessUntilInitialized;
 
   public SiriSXUpdaterParameters(
-      String configRef,
-      String feedId,
-      String url,
-      String requestorRef,
-      int frequencySec,
-      int earlyStartSec,
-      int timeoutSec,
-      boolean blockReadinessUntilInitialized
+    String configRef,
+    String feedId,
+    String url,
+    String requestorRef,
+    int frequencySec,
+    int earlyStartSec,
+    int timeoutSec,
+    boolean blockReadinessUntilInitialized
   ) {
     this.configRef = configRef;
     this.feedId = feedId;
@@ -32,21 +33,17 @@ public class SiriSXUpdaterParameters implements PollingGraphUpdaterParameters {
     this.blockReadinessUntilInitialized = blockReadinessUntilInitialized;
   }
 
-  String getFeedId() {
-    return feedId;
-  }
-
   public String getUrl() {
     return url;
   }
 
   @Override
-  public int getFrequencySec() {
+  public int frequencySec() {
     return frequencySec;
   }
 
   @Override
-  public String getConfigRef() {
+  public String configRef() {
     return configRef;
   }
 
@@ -64,5 +61,9 @@ public class SiriSXUpdaterParameters implements PollingGraphUpdaterParameters {
 
   public boolean blockReadinessUntilInitialized() {
     return blockReadinessUntilInitialized;
+  }
+
+  String getFeedId() {
+    return feedId;
   }
 }

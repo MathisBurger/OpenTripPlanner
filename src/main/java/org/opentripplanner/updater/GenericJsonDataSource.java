@@ -10,33 +10,26 @@ import org.slf4j.LoggerFactory;
 public abstract class GenericJsonDataSource<T> implements DataSource<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(GenericJsonDataSource.class);
-
-  private String url;
   private final JsonDataListDownloader<T> jsonDataListDownloader;
-
+  private final String url;
   protected List<T> updates = List.of();
 
   public GenericJsonDataSource(String url, String jsonParsePath, Map<String, String> headers) {
     this.url = url;
-    jsonDataListDownloader = new JsonDataListDownloader<>(url, jsonParsePath, this::parseElement, headers);
+    jsonDataListDownloader =
+      new JsonDataListDownloader<>(url, jsonParsePath, this::parseElement, headers);
   }
-
-  public GenericJsonDataSource(String url, String jsonParsePath) {
-    this(url, jsonParsePath, null);
-  }
-
-  protected abstract T parseElement(JsonNode jsonNode);
 
   @Override
   public boolean update() {
     List<T> updates = jsonDataListDownloader.download();
     if (updates != null) {
-      synchronized(this) {
+      synchronized (this) {
         this.updates = updates;
       }
       return true;
     }
-    LOG.info("Can't update entities from: " + url + ", keeping current list.");
+    LOG.info("Can't update entities from: {}, keeping current list.", url);
     return false;
   }
 
@@ -45,8 +38,5 @@ public abstract class GenericJsonDataSource<T> implements DataSource<T> {
     return updates;
   }
 
-  public void setUrl(String url) {
-    this.url = url;
-    this.jsonDataListDownloader.setUrl(url);
-  }
+  protected abstract T parseElement(JsonNode jsonNode);
 }

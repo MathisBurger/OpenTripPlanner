@@ -1,37 +1,46 @@
 package org.opentripplanner.netex.mapping;
 
-import org.opentripplanner.model.Operator;
+import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
+import org.opentripplanner.transit.model.organization.Operator;
+import org.opentripplanner.transit.model.organization.OperatorBuilder;
+import org.opentripplanner.util.lang.StringUtils;
 import org.rutebanken.netex.model.ContactStructure;
-
 
 /**
  * Maps a Netex operator to OTP Operator.
  */
 class OperatorToAgencyMapper {
 
-    private final FeedScopedIdFactory idFactory;
+  private DataImportIssueStore issueStore;
+  private final FeedScopedIdFactory idFactory;
 
-    OperatorToAgencyMapper(FeedScopedIdFactory idFactory) {
-        this.idFactory = idFactory;
+  OperatorToAgencyMapper(DataImportIssueStore issueStore, FeedScopedIdFactory idFactory) {
+    this.issueStore = issueStore;
+    this.idFactory = idFactory;
+  }
+
+  Operator mapOperator(org.rutebanken.netex.model.Operator source) {
+    final String name;
+    if (source.getName() == null || !StringUtils.hasValue(source.getName().getValue())) {
+      issueStore.add("MissingOperatorName", "Missing name for operator %s", source.getId());
+      // fall back to NeTEx id when the operator name is missing
+      name = source.getId();
+    } else {
+      name = source.getName().getValue();
     }
+    var target = Operator.of(idFactory.createId(source.getId())).withName(name);
 
-    Operator mapOperator(org.rutebanken.netex.model.Operator source){
-        Operator target = new Operator(
-            idFactory.createId(source.getId())
-        );
-        target.setName(source.getName().getValue());
+    mapContactDetails(source.getContactDetails(), target);
 
-        mapContactDetails(source.getContactDetails(), target);
+    return target.build();
+  }
 
-        return target;
+  private static void mapContactDetails(ContactStructure contactDetails, OperatorBuilder target) {
+    if (contactDetails == null) {
+      return;
     }
-
-    private static void mapContactDetails(ContactStructure contactDetails, Operator target) {
-        if(contactDetails == null) {
-            return;
-        }
-        target.setUrl(contactDetails.getUrl());
-        target.setPhone(contactDetails.getPhone());
-    }
+    target.withUrl(contactDetails.getUrl());
+    target.withPhone(contactDetails.getPhone());
+  }
 }
