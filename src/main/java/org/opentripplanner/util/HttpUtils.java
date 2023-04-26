@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 public class HttpUtils {
     
-    private static final long TIMEOUT_CONNECTION = 5000;
-    private static final int TIMEOUT_SOCKET = 5000;
+    private static final long TIMEOUT_CONNECTION = 30000;
+    private static final int TIMEOUT_SOCKET = 30000;
 
     public static InputStream getData(URI uri) throws IOException {
         return getData(uri, null);
