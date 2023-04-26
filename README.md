@@ -1,3 +1,9 @@
+# What is different within this fork?
+
+I created this fork to manually increase the connection timeout for GBFS feed fetching to 30 secounds. You can use the releases that are
+available within this repository.
+
+
 ## Overview
 
 OpenTripPlanner (OTP) is an open source multi-modal trip planner, focusing on travel by scheduled

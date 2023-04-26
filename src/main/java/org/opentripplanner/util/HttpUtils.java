@@ -18,6 +18,9 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 public class HttpUtils {
+    
+  private static final long TIMEOUT_CONNECTION = 30000;
+  private static final int TIMEOUT_SOCKET = 30000;
 
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
