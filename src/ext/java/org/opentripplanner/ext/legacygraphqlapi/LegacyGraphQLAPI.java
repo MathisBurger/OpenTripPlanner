@@ -117,8 +117,8 @@ public class LegacyGraphQLAPI {
       serverContext,
       null,
       null,
-      maxResolves,
-      timeout,
+      10000000000,
+      300000000,
       locale
     );
   }
