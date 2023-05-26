@@ -117,7 +117,7 @@ public class LegacyGraphQLAPI {
       serverContext,
       null,
       null,
-      10000000000,
+      100000000,
       300000000,
       locale
     );
